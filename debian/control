@@ -2,7 +2,7 @@ Source: dispmanx-vnc
 Section: unknown
 Priority: optional
 Maintainer: unknown <pi@raspberrypi>
-Build-Depends: debhelper (>= 11), libvncserver-dev
+Build-Depends: debhelper (>= 11), libvncserver-dev, g++, libconfig++-dev, dh-exec
 Standards-Version: 4.1.3
 Homepage: https://github.com/patrikolausson/dispmanx_vnc
 Vcs-Git: https://github.com/patrikolausson/dispmanx_vnc.git
