@@ -50,15 +50,19 @@ Building a deb package on raspbian buster
 -----------------------------------------
 In addition to the above build requirements, install the build tools
 
-	sudo apt-get install dh-make bzr-builddeb build-essential
+	sudo apt-get install dh-exec bzr-builddeb build-essential
 
 Run in the extracted source directory
 
 	dpkg-buildpackage -b -rfakeroot -us -uc
 
-Package will be built one directory above the source.
+If the linker complains about missing GLESv2 or EGL, that is due to missing libraries under /opt/vc/lib. It may be corrected using
 
-Install the package
+	for l in EGL GLESv2; do [ -e /opt/vc/lib/lib${l}.so ] || ([ -f /opt/vc/lib/libbrcm${l}.so ] && ln -s libbrcm${l}.so /opt/vc/lib/lib${l}.so); done
+
+The deb packages will be built one directory above the source. Disregard the *dbgsym* package.
+
+To install the package
 
 	sudo dpkg -i ../dispmanx-vnc_*_armhf.deb
 
