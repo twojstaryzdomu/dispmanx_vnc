@@ -1,0 +1,74 @@
+name: Build & publish deb
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+        SHORT_SHA=${GITHUB_SHA:0:7}
+        VERSION=0.0
+        GIT_DATE=$(git log -1 --format=%ad --date=format:%Y%m%d)
+        DCH_VER=${VERSION}~git${GIT_DATE}.${SHORT_SHA}
+        PACKAGE=${GITHUB_REPOSITORY#*/}
+        PACKAGE=${PACKAGE//_/-}
+        DEB=${PACKAGE}_${DCH_VER}_armhf.deb
+        for n in DEB DCH_VER GIT_DATE PACKAGE SHORT_SHA VERSION; do
+          typeset -n v=${n}
+          echo "${n}=${v}"
+        done >> $GITHUB_ENV
+    - uses: twojstaryzdomu/arm-runner-action@master
+      with:
+        image_additional_mb: 512
+        copy_artifact_path: ${{ env.DEB }}
+        copy_artifact_dest: ${{ github.workspace }}
+        shell: ksh
+        debug: yes
+        import_github_env: yes
+        commands: |
+            [ -n "${PACKAGE}" ]
+            apt-get update
+            apt-get install -y g++ libvncserver-dev libconfig++-dev dh-exec bzr-builddeb build-essential
+            apt-get clean
+            [ -f debian/changelog ] && rm debian/changelog
+            git log --format='tformat:%ad:%h:%aN:%aE:%f:%-aD' --date=format:%Y%m%d | tac | while IFS=: read d s n e m t; do
+              if grep -q 0.0~git${d}.${s} debian/changelog; then
+                continue
+              else
+                EMAIL=${e} dch ${first---create --package ${PACKAGE}} ${first:+-b} -v ${VERSION}~git${d}.${s} "${m//-/ }"
+                sed -i '1s/UNRELEASED/unstable/g;0,/\(>  \).*/s//\1'"${t}"'/g' debian/changelog
+                first=''
+              fi
+            done
+            cat debian/changelog
+            for l in EGL GLESv2; do
+              [ -e /opt/vc/lib/lib${l}.so ] || \
+              ([ -f /opt/vc/lib/libbrcm${l}.so ] && \
+                ln -s libbrcm${l}.so /opt/vc/lib/lib${l}.so)
+            done
+            dpkg-buildpackage -b -rfakeroot -us -uc
+            mv ../${DEB} .
+    - id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.GIT_DATE }}.${{ env.SHORT_SHA }}
+        release_name: ${{ env.PACKAGE }}_${{ env.GIT_DATE }}.${{ env.SHORT_SHA }}
+        draft: false
+        prerelease: false
+    - id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/${{ env.DEB }}
+        asset_name: ${{ env.DEB }}
+        asset_content_type: application/zip
