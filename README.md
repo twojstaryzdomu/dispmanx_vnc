@@ -103,6 +103,29 @@ To revert to the default listening port, the overide file needs to be removed & 
 	sudo systemctl daemon-reload
 	sudo systemctl restart dispmanx_vnc.socket
 
+If dispmanx_vnc fails to start or a VNC client fails to connect
+---------------------------------------------------------------
+Make sure there is sufficient memory allocated to the GPU.
+
+Regardless of headless mode, dispmanx_vnc needs at least 32MB.
+
+With 16MB allocated to the GPU, dispmanx_vnc fails with the error:
+
+	[dmxvnc] Open display[0]...
+	[dmxvnc] Exception: vc_dispmanx_display_open failed
+
+GPU memory allocation is set in /boot/config.txt via the variables `gpu_mem` or
+`gpu_mem_X`, where X stands for the total amount of memory in MBs in the
+given RPi model. `gpu_mem` is accepted by all models.
+
+Consequently, the lowest applicable GPU memory allocation for RPi Zero W is:
+
+	gpu_mem_512=32
+
+And for RPi 3B+:
+
+	gpu_mem_1024=32
+
 If the keyboard or mouse does not work
 --------------------------------------
 Make sure the appropriate driver is loaded by issuing
