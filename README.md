@@ -40,7 +40,7 @@ And finally select the version you want to use with the following command
 
 On raspbian jessie or buster, prepare using the following
 ---------------------------------------------------------
-	sudo apt-get install g++ libvncserver-dev libconfig++-dev
+	sudo apt-get install g++ libvncserver-dev libconfig++-dev libegl1-mesa-dev libgles2-mesa-dev
 
 On OSMC, prepare using the following
 ------------------------------------
@@ -55,10 +55,6 @@ In addition to the above build requirements, install the build tools
 Run in the extracted source directory
 
 	dpkg-buildpackage -b -rfakeroot -us -uc
-
-If the linker complains about missing GLESv2 or EGL, that is due to missing libraries under /opt/vc/lib. It may be corrected using
-
-	for l in EGL GLESv2; do [ -e /opt/vc/lib/lib${l}.so ] || ([ -f /opt/vc/lib/libbrcm${l}.so ] && ln -s libbrcm${l}.so /opt/vc/lib/lib${l}.so); done
 
 The deb packages will be built one directory above the source. Disregard the *dbgsym* package.
 
