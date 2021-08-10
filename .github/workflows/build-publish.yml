@@ -34,7 +34,11 @@ jobs:
         commands: |
             [ -n "${PACKAGE}" ]
             apt-get update
-            apt-get install -y g++ libvncserver-dev libconfig++-dev dh-exec bzr-builddeb build-essential
+            apt-get install -y build-essential bzr-builddeb dh-exec
+            dpkg-checkbuilddeps 2>&1 \
+            | sed -E 's| \([^)]+\)||g' \
+            | grep -Po 'dependencies: \K.*' \
+            | xargs -r apt-get install -y
             apt-get clean
             [ -f debian/changelog ] && rm debian/changelog
             git log --format='tformat:%ad:%h:%aN:%aE:%f:%-aD' --date=format:%Y%m%d | tac | while IFS=: read d s n e m t; do
@@ -47,11 +51,6 @@ jobs:
               fi
             done
             cat debian/changelog
-            for l in EGL GLESv2; do
-              [ -e /opt/vc/lib/lib${l}.so ] || \
-              ([ -f /opt/vc/lib/libbrcm${l}.so ] && \
-                ln -s libbrcm${l}.so /opt/vc/lib/lib${l}.so)
-            done
             dpkg-buildpackage -b -rfakeroot -us -uc
             mv ../${DEB} .
     - id: create_release
