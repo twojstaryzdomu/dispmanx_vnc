@@ -51,11 +51,6 @@ jobs:
               fi
             done
             cat debian/changelog
-            for l in EGL GLESv2; do
-              [ -e /opt/vc/lib/lib${l}.so ] || \
-              ([ -f /opt/vc/lib/libbrcm${l}.so ] && \
-                ln -s libbrcm${l}.so /opt/vc/lib/lib${l}.so)
-            done
             dpkg-buildpackage -b -rfakeroot -us -uc
             mv ../${DEB} .
     - id: create_release
