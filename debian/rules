@@ -1,3 +1,6 @@
 #!/usr/bin/make -f
 %:
 	dh $@
+
+# Required due to dwz failing
+override_dh_dwz:
