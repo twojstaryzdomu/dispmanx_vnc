@@ -1,0 +1,3 @@
+#!/usr/bin/dh-exec
+dispmanx_vncserver usr/bin
+dispmanx_vncserver.conf.sample => etc/dispmanx_vncserver.conf
