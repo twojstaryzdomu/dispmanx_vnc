@@ -1,5 +1,5 @@
 [Unit]
-Description=dispmanx_vnc Socket for Per-Connection Servers
+Description=%p Socket for Per-Connection Servers
 
 [Socket]
 ListenStream=5901

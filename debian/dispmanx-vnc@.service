@@ -14,5 +14,5 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-Also=dispmanx_vnc.socket
+Also=%p.socket
 
