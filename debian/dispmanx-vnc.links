@@ -1,0 +1,2 @@
+usr/bin/dispmanx_vncserver usr/bin/dispmanx-vnc
+etc/dispmanx_vncserver.conf etc/dispmanx-vnc.conf

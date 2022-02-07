@@ -1,0 +1,22 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: dispmanx_vnc
+Upstream-Contact: patrik.olausson@gmail.com
+Source: https://github.com/patrikolausson/dispmanx_vnc
+Comment:
+ VNC Server for Raspberry PI using dispmanx
+
+Files: *
+Copyright:
+  2013, AndrewFromMelbourne, <andrew@rpi512.(none)>
+  2013, hanzelpeter, <hanzelpeter@gmail.com>
+  2013, Peter Hanzel, <hanzelpeter@gmail.com>
+  2015, Fredrik Andersson, <fredrikandersson@mac.com>
+  2015-2021, Patrik Olausson, <patrik.olausson@gmail.com>
+  2017, Mickaël Thomas, <mickael9@gmail.com>
+  2021-2022, twojstaryzdomu, <twojstaryzdomu@users.noreply.github.com>
+License: Expat
+
+Files: .github/workflows/build-publish.yml
+Copyright:
+  2021-2022, twojstaryzdomu, <twojstaryzdomu@users.noreply.github.com>
+License: Expat

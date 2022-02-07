@@ -14,6 +14,8 @@ Features
 - Stable even when changing resolution
 - Password support
 - Configurable port number
+- Inetd support
+- Supports listening for new clients or terminating server when a client disconnects
 - Configurable target frame rate, with automatic frame rate reduction down to 2/second when no updates are detected.
 - Adaptable algorithm for the best performance both for update intensive applications like video and animations, and low CPU usage for updates to smaller regions of the screen
 - Supports efficient downscaling to a quarter of the resoltion on the server side. Saves CPU, bandwidth and is practical for remote control of e.g. Kodi in high resolution from a computer with lower resolution
@@ -36,13 +38,70 @@ And finally select the version you want to use with the following command
 
 	make CXX=g++-4.8
 
-On raspbian jessie, prepare using the following
------------------------------------------------
-	sudo apt-get install g++ libvncserver-dev libconfig++-dev
+On raspbian jessie or buster, prepare using the following
+---------------------------------------------------------
+	sudo apt-get install g++ libvncserver-dev libconfig++-dev libegl1-mesa-dev libgles2-mesa-dev
 
 On OSMC, prepare using the following
 ------------------------------------
 	sudo apt-get install build-essential rbp-userland-dev-osmc libvncserver-dev libconfig++-dev
+
+Building dispmanx-vnc deb package on raspbian buster & bullseye
+---------------------------------------------------------------
+The package has been renamed to dispmanx-vnc in line with debian naming requirements.
+
+In addition to the above build requirements, install the build tools
+
+	sudo apt-get install build-essential debhelper devscripts dh-exec
+
+Run in the extracted source directory
+
+	dpkg-buildpackage -b -rfakeroot -us -uc
+
+The deb packages will be built one directory above the source. Disregard the *dbgsym* package.
+
+To install the package
+
+	sudo dpkg -i ../dispmanx-vnc_*_armhf.deb
+
+Running dispmanx-vnc from the package
+-------------------------------------
+There is no need to run any services. By default, the package starts a systemd-based socket listener on port TCP 5901. The socket will be listening on boot as well.
+
+On a vnc connection, the socket starts the binary dispmanx-vnc (which is a symlink to dispmanx_vncserver, so it may still be called manually).
+
+The systemd listener may be queried with
+
+	systemctl status dispmanx-vnc.socket
+
+Among other things, the status command will display the listening port(s), the count of currently connected clients and the tally of clients connected so far.
+
+Note no dispmanx-vnc processes are run until at least one client is connected. This ensures very lightweight resource use, suitable for low memory environments, such as Raspberry PI Zero.
+
+For every connected client, a new dispmanx-vnc instance is started. When a client quits, the service instance and the process spawned by the socket are stopped.
+
+The clients connected may be viewed with
+
+	systemctl | grep dispmanx-vnc@
+
+Changing listener port in dispmanx-vnc package
+----------------------------------------------
+When a systemd socket listens on behalf of dispmanx-vnc, the listening port is defined in a systemd configuration file.
+
+The default listening port may be changed with a systemd drop-in file.
+
+For example, the following will set the port to 5910 & restart the listener
+
+	sudo mkdir -p /etc/systemd/system/dispmanx-vnc.socket.d
+	echo -e '[Socket]\nListenStream=\nListenStream=5910' | sudo tee /etc/systemd/system/dispmanx-vnc.socket.d/00_port_override.conf
+	sudo systemctl daemon-reload
+	sudo systemctl restart dispmanx-vnc.socket
+
+To revert to the default listening port, the overide file needs to be removed & the socket restarted
+
+	rm /etc/systemd/system/dispmanx-vnc.socket.d/00_port_override.conf
+	sudo systemctl daemon-reload
+	sudo systemctl restart dispmanx-vnc.socket
 
 If the keyboard or mouse does not work
 --------------------------------------
@@ -54,11 +113,15 @@ Make this load automatically at boot by adding the following on a separate row i
 
 	evdev
 
-After build
------------
+Running manually
+----------------
 Run the program by issuing
 
 	sudo ./dispmanx_vncserver
+
+Or if the package is installed
+
+	sudo /usr/bin/dispmanx_vncserver
 	
 Parameters
 	Usage: ./dispmanx_vncserver [OPTION]...
@@ -67,8 +130,10 @@ Parameters
 	-c, --config-file=FILE       use the specified configuration file
 	-d, --downscale              downscales the screen to a quarter in vnc
 	-f, --fullscreen             always runs fullscreen mode
+	-i, --inetd                  stdio instead of listening socket
 	-l, --localhost              only listens to local ports
 	-m, --multi-threaded         runs vnc in a separate thread
+	-o, --once                   connect once, then terminate
 	-p, --port=PORT              makes vnc available on the speficied port
 	-P, --password=PASSWORD      protects the session with PASSWORD
 	-r, --relative               relative mouse movements
@@ -83,7 +148,7 @@ Config file
 -----------
 The program supports reading all the settings from a configuration file. See the attached .conf.sample-file. The default name of the config file is the same as of the binary with the extension ".conf". The program will first look in the same folder as the binary is placed, if not found there it will try /etc/. The configuration file name and location may be specified with the --config-file command line parameter. Any command line arguments will override those of the config file.
 
-
+While the configuration file is read in by default when the program is started by the systemd service, two variables (port and inetd) are passed in as command line arguments and take precedence over configuration file values. In view of systemd's control of port assignment, the port value in the configuration file is irrelevant when the systemd socket starts dispmanx-vnc.
 
 Screen resolution / Headless operation
 --------------------------------------
