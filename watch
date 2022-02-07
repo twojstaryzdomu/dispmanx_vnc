@@ -1,0 +1,4 @@
+version=4
+opts="mode=git, pgpmode=none, oversionmangle=s%^\d[\d.]*%1.0%" \
+  https://github.com/twojstaryzdomu/dispmanx_vnc \
+  heads/master debian uupdate
