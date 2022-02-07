@@ -93,13 +93,13 @@ For example, the following will set the port to 5910 & restart the listener
 	sudo mkdir -p /etc/systemd/system/dispmanx-vnc.socket.d
 	echo -e '[Socket]\nListenStream=\nListenStream=5910' | sudo tee /etc/systemd/system/dispmanx-vnc.socket.d/00_port_override.conf
 	sudo systemctl daemon-reload
-	sudo systemctl restart dispmanx_vnc.socket
+	sudo systemctl restart dispmanx-vnc.socket
 
 To revert to the default listening port, the overide file needs to be removed & the socket restarted
 
-	rm /etc/systemd/system/dispmanx_vnc.socket.d/00_port_override.conf
+	rm /etc/systemd/system/dispmanx-vnc.socket.d/00_port_override.conf
 	sudo systemctl daemon-reload
-	sudo systemctl restart dispmanx_vnc.socket
+	sudo systemctl restart dispmanx-vnc.socket
 
 If the keyboard or mouse does not work
 --------------------------------------
