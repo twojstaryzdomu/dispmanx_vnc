@@ -46,11 +46,13 @@ On OSMC, prepare using the following
 ------------------------------------
 	sudo apt-get install build-essential rbp-userland-dev-osmc libvncserver-dev libconfig++-dev
 
-Building a deb package on raspbian buster
------------------------------------------
+Building dispmanx-vnc deb package on raspbian buster & bullseye
+---------------------------------------------------------------
+The package has been renamed to dispmanx-vnc in line with debian naming requirements.
+
 In addition to the above build requirements, install the build tools
 
-	sudo apt-get install dh-exec bzr-builddeb build-essential
+	sudo apt-get install build-essential debhelper devscripts dh-exec
 
 Run in the extracted source directory
 
@@ -62,23 +64,23 @@ To install the package
 
 	sudo dpkg -i ../dispmanx-vnc_*_armhf.deb
 
-Running dispmanx_vnc from dispmanx_vnc package
-----------------------------------------------
+Running dispmanx-vnc from the package
+-------------------------------------
 There is no need to run any services. By default, the package runs a systemd-based socket listener on port TCP 5901. The socket will be listening on boot as well.
 
 The systemd listener may be queried with
 
-	systemctl status dispmanx_vnc.socket
+	systemctl status dispmanx-vnc.socket
 
 Among other things, the status command will display the listening port(s), the count of currently connected clients and the tally of clients connected so far.
 
-Note no dispmanx_vnc processes are run until at least one client is connected. This ensures very lightweight resource use, suitable for low memory environments, such as Raspberry PI Zero.
+Note no dispmanx-vnc processes are run until at least one client is connected. This ensures very lightweight resource use, suitable for low memory environments, such as Raspberry PI Zero.
 
-For every connected client, a new dispmanx_vnc instance is started. When a client quits, the service instance and the process spawned by the socket are stopped.
+For every connected client, a new dispmanx-vnc instance is started. When a client quits, the service instance and the process spawned by the socket are stopped.
 
 The clients connected may be viewed with
 
-	systemctl | grep dispmanx_vnc@
+	systemctl | grep dispmanx-vnc@
 
 Changing listener port in dispmanx-vnc package
 ----------------------------------------------
@@ -88,8 +90,8 @@ The default listening port may be changed with a systemd drop-in file.
 
 For example, the following will set the port to 5910 & restart the listener
 
-	sudo mkdir -p /etc/systemd/system/dispmanx_vnc.socket.d
-	echo -e '[Socket]\nListenStream=\nListenStream=5910' | sudo tee /etc/systemd/system/dispmanx_vnc.socket.d/00_port_override.conf
+	sudo mkdir -p /etc/systemd/system/dispmanx-vnc.socket.d
+	echo -e '[Socket]\nListenStream=\nListenStream=5910' | sudo tee /etc/systemd/system/dispmanx-vnc.socket.d/00_port_override.conf
 	sudo systemctl daemon-reload
 	sudo systemctl restart dispmanx_vnc.socket
 
@@ -140,7 +142,7 @@ Config file
 -----------
 The program supports reading all the settings from a configuration file. See the attached .conf.sample-file. The default name of the config file is the same as of the binary with the extension ".conf". The program will first look in the same folder as the binary is placed, if not found there it will try /etc/. The configuration file name and location may be specified with the --config-file command line parameter. Any command line arguments will override those of the config file.
 
-
+While the configuration file is read in by default when the program is started by the systemd service, two variables (port and inetd) are passed in as command line arguments and take precedence over configuration file values. In view of systemd's control of port assignment, the port value in the configuration file is irrelevant when systemd socket starts dispmanx-vnc.
 
 Screen resolution / Headless operation
 --------------------------------------
