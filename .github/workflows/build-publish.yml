@@ -50,7 +50,7 @@ jobs:
         commands: |
           [ -n "${PACKAGE}" ]
           apt-get update
-          apt-get install -y build-essential bzr-builddeb dh-exec
+          apt-get install -y --no-install-suggests build-essential debhelper devscripts dh-exec
           dpkg-checkbuilddeps 2>&1 \
           | sed -E 's| \([^)]+\)||g' \
           | grep -Po 'dependencies: \K.*' \
@@ -63,11 +63,14 @@ jobs:
             for ifs in \^ \~ \! \#; do
               git log --format=%b:%B | grep -Fq "${ifs}" || break;
             done
-            ver_date_sha=$(git log --format=tformat:%ad${ifs}%h${ifs}%aN${ifs}%aE${ifs}%f${ifs}%-aD${ifs}%D --date=format:%Y%m%d --reverse | while IFS=${ifs} read d s n e m t x; do
+            ver_date_sha=$(git log \
+            --format=tformat:%ad${ifs}%h${ifs}%aN${ifs}%aE${ifs}%f${ifs}%-aD${ifs}%D \
+            --date=format:%Y%m%d --reverse \
+            | while IFS=${ifs} read d s n e m t x; do
               tag=$(grep -Po 'tag: [a-zA-Z]*\K[0-9a-f.]+' <<< "${x}"; :)
               last_tag=${tag:-${last_tag:-0.0}}
               dch_ver=${tag:-${last_tag}~git${d}.${s}}
-              if grep -q "(${dch_ver}})" debian/changelog 2>/dev/null; then
+              if grep -q "(${dch_ver})" debian/changelog 2>/dev/null; then
                 continue
               else
                 NAME=${n} EMAIL=${e} dch ${first---create --package ${PACKAGE}} ${first+-b} -v ${dch_ver} "${m//-/ }"
@@ -90,16 +93,18 @@ jobs:
           esac
           DCH_VER=${DCH_VER:-$(head -1 debian/changelog | grep -Po '(?:[a-z-]+\s)\(\K.*(?=\))')}
           GIT_DATE=${GIT_DATE:-$(git log -1 --format=%ad --date=format:%Y%m%d)}
+          RELEASE_NAME=${PACKAGE}_${DCH_VER}
           SHORT_SHA=${SHORT_SHA:-${GITHUB_SHA:0:7}}
           TAG_NAME=${DCH_VER//\~/.}
-          for n in DCH_VER GIT_DATE SHORT_SHA TAG_NAME; do
+          for n in DCH_VER GIT_DATE RELEASE_NAME SHORT_SHA TAG_NAME; do
             typeset -n v=${n}
             echo "${n}=${v}"
           done | tee -a $GITHUB_ENV
           cat debian/changelog
           [ ! -f debian/watch ] || sed -Ei 's|(https?://github.com/)\S+|\1'${GITHUB_REPOSITORY}'|g' debian/watch
           dpkg-buildpackage -b -rfakeroot -us -uc
-          debs=$(grep -Poz '(?s)(?:\nPackage:\s*\K\N+|\nArchitecture:\K\s\N+\n)' debian/control | while read p a; do
+          debs=$(grep -Poz '(?s)(?:\nPackage:\s*\K\N+|\nArchitecture:\K\s\N+\n)' debian/control \
+          | while read p a; do
             case "${a}" in any) a=${DEB_BUILD_ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)};; esac
             deb=${p}_${DCH_VER}_${a}.deb
             echo "p = ${p}; a = ${a}; deb = ${deb}" 1>&2
@@ -116,7 +121,7 @@ jobs:
       with:
         files: ${{ env.DEBS }}
         tag_name: ${{ env.TAG_NAME }}
-        name: ${{ env.PACKAGE }}_${{ env.DCH_VER }}
+        name: ${{ env.RELEASE_NAME }}
         fail_on_unmatched_files: true
         draft: ${{ github.event.inputs.draft }}
         prerelease: ${{ github.event.inputs.prerelease }}
